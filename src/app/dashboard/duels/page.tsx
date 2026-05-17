@@ -21,8 +21,8 @@ export default async function DuelsPage() {
   function DuelRow({ d }: { d: NonNullable<typeof duels>[0] }) {
     const isChallenger = d.challenger_id === userId;
     const opponent = isChallenger
-      ? (d.opponent as { full_name: string } | null)?.full_name
-      : (d.challenger as { full_name: string } | null)?.full_name;
+      ? (d.opponent as unknown as { full_name: string } | null)?.full_name
+      : (d.challenger as unknown as { full_name: string } | null)?.full_name;
     const won = d.winner_id === userId;
     return (
       <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-900 last:border-0 hover:bg-zinc-950 transition-colors">
