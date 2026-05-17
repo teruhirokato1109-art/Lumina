@@ -12,7 +12,7 @@ export async function checkQuota(userId: string): Promise<{ allowed: boolean; re
     .eq("id", userId)
     .single();
 
-  if (!profile) return { allowed: false, reason: "Profile not found." };
+  if (!profile) return { allowed: true };
 
   if (profile.quota_reset_at && new Date(profile.quota_reset_at) < new Date()) {
     await supabase.from("profiles").update({
