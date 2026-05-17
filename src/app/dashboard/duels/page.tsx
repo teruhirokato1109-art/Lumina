@@ -12,16 +12,18 @@ export default async function DuelsPage() {
     .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
     .order("created_at", { ascending: false });
 
-  const pending = duels?.filter((d) => d.status === "pending" && d.opponent_id === user.id) ?? [];
+  const userId = user!.id;
+
+  const pending = duels?.filter((d) => d.status === "pending" && d.opponent_id === userId) ?? [];
   const active = duels?.filter((d) => d.status === "active") ?? [];
   const completed = duels?.filter((d) => d.status === "completed") ?? [];
 
   function DuelRow({ d }: { d: NonNullable<typeof duels>[0] }) {
-    const isChallenger = d.challenger_id === user.id;
+    const isChallenger = d.challenger_id === userId;
     const opponent = isChallenger
       ? (d.opponent as { full_name: string } | null)?.full_name
       : (d.challenger as { full_name: string } | null)?.full_name;
-    const won = d.winner_id === user.id;
+    const won = d.winner_id === userId;
     return (
       <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-900 last:border-0 hover:bg-zinc-950 transition-colors">
         <div>
@@ -34,7 +36,7 @@ export default async function DuelsPage() {
               {won ? "Won" : "Lost"}
             </span>
           )}
-          {d.status === "pending" && d.opponent_id === user.id && (
+          {d.status === "pending" && d.opponent_id === userId && (
             <a href={`/dashboard/duels/${d.id}`} className="text-xs font-medium px-3 py-1.5 bg-white text-black rounded-md hover:bg-zinc-200 transition-colors">
               Respond
             </a>
@@ -44,7 +46,7 @@ export default async function DuelsPage() {
               Continue
             </a>
           )}
-          {d.status === "pending" && d.challenger_id === user.id && (
+          {d.status === "pending" && d.challenger_id === userId && (
             <span className="text-xs text-zinc-600">Awaiting response</span>
           )}
         </div>
