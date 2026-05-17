@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sanitizedMessages = trimmed.map((m: { role: string; content: string }) => ({
-    ...m,
+    role: (m.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
     content: sanitizeInput(m.content),
   }));
 
