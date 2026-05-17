@@ -6,27 +6,29 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: profile } = await supabase
-    .from("profiles").select("full_name, school_name, grade, merits, created_at, subscription_status, subscription_period_end, stripe_customer_id").eq("id", user.id).single();
+    .from("profiles").select("full_name, school_name, grade, merits, created_at, subscription_status, subscription_period_end, stripe_customer_id").eq("id", userId).single();
 
   const { data: leaderboard } = await supabase
     .from("profiles").select("id, merits")
     .eq("school_name", profile?.school_name).eq("grade", profile?.grade)
     .order("merits", { ascending: false });
 
-  const rank = leaderboard?.findIndex((p) => p.id === user.id) ?? -1;
+  const rank = leaderboard?.findIndex((p) => p.id === userId) ?? -1;
   const total = leaderboard?.length ?? 0;
 
   const { data: exams } = await supabase
     .from("oral_exams").select("id, subject, passed, score, created_at")
-    .eq("user_id", user.id).eq("passed", true).order("created_at", { ascending: false });
+    .eq("user_id", userId).eq("passed", true).order("created_at", { ascending: false });
 
   const { data: duels } = await supabase
     .from("duels").select("id, winner_id, status")
-    .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
+    .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
     .eq("status", "completed");
 
-  const wins = duels?.filter((d) => d.winner_id === user.id).length ?? 0;
+  const wins = duels?.filter((d) => d.winner_id === userId).length ?? 0;
   const totalDuels = duels?.length ?? 0;
   const winRate = totalDuels > 0 ? Math.round((wins / totalDuels) * 100) : 0;
 

@@ -6,8 +6,10 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: profile } = await supabase
-    .from("profiles").select("full_name, school_name, grade, merits").eq("id", user.id).single();
+    .from("profiles").select("full_name, school_name, grade, merits").eq("id", userId).single();
 
   const { data: leaderboard } = await supabase
     .from("profiles").select("id, full_name, merits")
@@ -17,23 +19,23 @@ export default async function DashboardPage() {
   const { data: recentDuels } = await supabase
     .from("duels")
     .select("id, topic, status, challenger_id, opponent_id, winner_id, merit_wager, created_at, challenger:profiles!duels_challenger_id_fkey(full_name), opponent:profiles!duels_opponent_id_fkey(full_name)")
-    .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
+    .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
     .order("created_at", { ascending: false }).limit(4);
 
   const { data: pendingDuels } = await supabase
     .from("duels")
     .select("id, topic, merit_wager, challenger_id, challenger:profiles!duels_challenger_id_fkey(full_name)")
-    .eq("opponent_id", user.id).eq("status", "pending").limit(3);
+    .eq("opponent_id", userId).eq("status", "pending").limit(3);
 
   const { data: recentExams } = await supabase
     .from("oral_exams").select("id, subject, score, passed, created_at")
-    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(3);
+    .eq("user_id", userId).order("created_at", { ascending: false }).limit(3);
 
-  const rank = leaderboard?.findIndex((p) => p.id === user.id) ?? -1;
+  const rank = leaderboard?.findIndex((p) => p.id === userId) ?? -1;
   const displayRank = rank === -1 ? "—" : `#${rank + 1}`;
   const totalInGrade = leaderboard?.length ?? 0;
-  const wins = recentDuels?.filter((d) => d.winner_id === user.id).length ?? 0;
-  const losses = recentDuels?.filter((d) => d.winner_id && d.winner_id !== user.id).length ?? 0;
+  const wins = recentDuels?.filter((d) => d.winner_id === userId).length ?? 0;
+  const losses = recentDuels?.filter((d) => d.winner_id && d.winner_id !== userId).length ?? 0;
 
   return (
     <div className="px-10 py-10 max-w-5xl space-y-10">
@@ -60,7 +62,7 @@ export default async function DashboardPage() {
             <div key={d.id} className="flex items-center justify-between px-5 py-3">
               <div>
                 <p className="text-sm text-zinc-300">
-                  <span className="font-medium">{(d.challenger as { full_name: string } | null)?.full_name}</span> challenged you · {d.topic}
+                  <span className="font-medium">{(d.challenger as unknown as { full_name: string } | null)?.full_name}</span> challenged you · {d.topic}
                 </p>
                 <p className="text-xs text-zinc-500 mt-0.5">{d.merit_wager} Merits wagered</p>
               </div>
@@ -96,11 +98,11 @@ export default async function DashboardPage() {
             <a href="/dashboard/leaderboard" className="text-xs text-zinc-500 hover:text-zinc-300">View all →</a>
           </div>
           {leaderboard && leaderboard.length > 0 ? leaderboard.map((p, i) => (
-            <div key={p.id} className={`flex items-center justify-between px-5 py-3 border-b border-zinc-900 last:border-0 ${p.id === user.id ? "bg-zinc-900" : "hover:bg-zinc-950"} transition-colors`}>
+            <div key={p.id} className={`flex items-center justify-between px-5 py-3 border-b border-zinc-900 last:border-0 ${p.id === userId ? "bg-zinc-900" : "hover:bg-zinc-950"} transition-colors`}>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-zinc-700 w-4">{i + 1}</span>
-                <span className={`text-sm ${p.id === user.id ? "font-semibold text-white" : "text-zinc-400"}`}>
-                  {p.id === user.id ? "You" : p.full_name}
+                <span className={`text-sm ${p.id === userId ? "font-semibold text-white" : "text-zinc-400"}`}>
+                  {p.id === userId ? "You" : p.full_name}
                 </span>
               </div>
               <span className="text-xs text-zinc-500">{p.merits.toLocaleString()} M</span>
@@ -146,9 +148,9 @@ export default async function DashboardPage() {
           {recentDuels && recentDuels.length > 0 ? recentDuels.map((d) => {
             const isChallenger = d.challenger_id === user.id;
             const opponent = isChallenger
-              ? (d.opponent as { full_name: string } | null)?.full_name
-              : (d.challenger as { full_name: string } | null)?.full_name;
-            const won = d.winner_id === user.id;
+              ? (d.opponent as unknown as { full_name: string } | null)?.full_name
+              : (d.challenger as unknown as { full_name: string } | null)?.full_name;
+            const won = d.winner_id === userId;
             return (
               <div key={d.id} className="flex items-center justify-between px-5 py-3 border-b border-zinc-900 last:border-0 hover:bg-zinc-950 transition-colors">
                 <div>

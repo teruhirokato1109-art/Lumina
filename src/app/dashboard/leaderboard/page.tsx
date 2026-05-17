@@ -6,8 +6,10 @@ export default async function LeaderboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: profile } = await supabase
-    .from("profiles").select("school_name, grade, merits").eq("id", user.id).single();
+    .from("profiles").select("school_name, grade, merits").eq("id", userId).single();
 
   const { data: leaderboard } = await supabase
     .from("profiles").select("id, full_name, merits, grade")
@@ -15,7 +17,7 @@ export default async function LeaderboardPage() {
     .eq("grade", profile?.grade)
     .order("merits", { ascending: false });
 
-  const userRank = leaderboard?.findIndex((p) => p.id === user.id) ?? -1;
+  const userRank = leaderboard?.findIndex((p) => p.id === userId) ?? -1;
 
   return (
     <div className="px-10 py-10 max-w-3xl">
@@ -46,7 +48,7 @@ export default async function LeaderboardPage() {
         </div>
 
         {leaderboard && leaderboard.length > 0 ? leaderboard.map((p, i) => {
-          const isUser = p.id === user.id;
+          const isUser = p.id === userId;
           return (
             <div key={p.id} className={`grid grid-cols-12 items-center px-5 py-3.5 border-b border-zinc-900 last:border-0 transition-colors ${isUser ? "bg-zinc-900" : "hover:bg-zinc-950"}`}>
               <span className="col-span-1 text-sm text-zinc-600 font-medium">{i + 1}</span>

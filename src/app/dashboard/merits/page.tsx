@@ -6,12 +6,14 @@ export default async function MeritsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: profile } = await supabase
-    .from("profiles").select("full_name, merits, school_name, grade").eq("id", user.id).single();
+    .from("profiles").select("full_name, merits, school_name, grade").eq("id", userId).single();
 
   const { data: transactions } = await supabase
     .from("merit_transactions").select("id, amount, reason, created_at")
-    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
+    .eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
 
   const earned = transactions?.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0) ?? 0;
   const spent = transactions?.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0) ?? 0;

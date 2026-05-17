@@ -6,9 +6,11 @@ export default async function OralExamsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: exams } = await supabase
     .from("oral_exams").select("id, subject, score, passed, question_count, created_at")
-    .eq("user_id", user.id).order("created_at", { ascending: false });
+    .eq("user_id", userId).order("created_at", { ascending: false });
 
   const passed = exams?.filter((e) => e.passed).length ?? 0;
   const avgScore = exams && exams.length > 0
