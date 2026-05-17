@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
     content: sanitizeInput(m.content),
   }));
 
-  const stream = await openai.chat.completions.create({
+  let stream;
+  try {
+    stream = await openai.chat.completions.create({
     model: "gpt-4o-mini", // cheaper model — more than capable for tutoring
     stream: true,
     max_tokens: 600, // cap output tokens
@@ -61,6 +63,10 @@ Rules:
       ...sanitizedMessages,
     ],
   });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "OpenAI error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
   const encoder = new TextEncoder();
   let totalChars = 0;

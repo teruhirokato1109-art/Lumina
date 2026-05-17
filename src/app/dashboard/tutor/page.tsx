@@ -50,6 +50,13 @@ export default function TutorPage() {
       body: JSON.stringify({ messages: newMessages }),
     });
 
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "An error occurred." }));
+      setMessages([...newMessages, { role: "assistant", content: `Error: ${err.error ?? "Something went wrong."}` }]);
+      setStreaming(false);
+      return;
+    }
+
     const reader = res.body?.getReader();
     const decoder = new TextDecoder();
     let full = "";
