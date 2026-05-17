@@ -6,13 +6,13 @@ export default async function DuelsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const userId = user!.id;
+
   const { data: duels } = await supabase
     .from("duels")
     .select("id, topic, status, merit_wager, winner_id, created_at, challenger_id, opponent_id, challenger:profiles!duels_challenger_id_fkey(full_name), opponent:profiles!duels_opponent_id_fkey(full_name)")
-    .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
+    .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
     .order("created_at", { ascending: false });
-
-  const userId = user!.id;
 
   const pending = duels?.filter((d) => d.status === "pending" && d.opponent_id === userId) ?? [];
   const active = duels?.filter((d) => d.status === "active") ?? [];
