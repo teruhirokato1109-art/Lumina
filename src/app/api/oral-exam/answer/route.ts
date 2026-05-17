@@ -14,15 +14,17 @@ export async function POST(req: NextRequest) {
   if (!quota.allowed) return NextResponse.json({ error: quota.reason }, { status: 429 });
 
   const { examId, subject, difficulty, history, questionNum, isLast } = await req.json();
-  const trimmed = trimHistory(history);
-  const lastAnswer = [...trimmed].reverse().find((m: { role: string }) => m.role === "user");
+
+  // Oral exam history uses { role, text } shape — trim manually
+  const trimmed: { role: string; text: string }[] = history.slice(-10);
+  const lastAnswer = [...trimmed].reverse().find((m) => m.role === "user");
 
   if (lastAnswer) {
-    const safe = await moderateInput(lastAnswer.content, openai);
+    const safe = await moderateInput(sanitizeInput(lastAnswer.text), openai);
     if (!safe) return NextResponse.json({ error: "Input flagged by content policy." }, { status: 400 });
   }
 
-  const sanitizedHistory = trimmed.map((m: { role: string; text: string }) => ({
+  const sanitizedHistory = trimmed.map((m) => ({
     role: m.role === "ai" ? "assistant" as const : "user" as const,
     content: sanitizeInput(m.text),
   }));
